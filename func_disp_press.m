@@ -1,11 +1,12 @@
 %% Solving Hertzian Contact Stress
-function [d_vec, P_mat] = func_disp_press(v_init_mph, options)
+function [d_vec, P_mat, d_max_exact] = func_disp_press(v_init_mph, options)
 
     % Options
     test_nu1    = options(1);
     plotting    = options(2);
     printing    = options(3);
     movies      = options(4);
+    moviePlt    = 0;        % 0 for pressure, 1 for displacement
     
     % Constants     (1 = baseball, 2 = ice)
     R   = 2.9;          % in
@@ -124,19 +125,48 @@ function [d_vec, P_mat] = func_disp_press(v_init_mph, options)
         clf;
         % Iteration
         for i = 2:length(t)
+            % Finding Displacement Curve
+            a       = max(r_mat(i,:));
+            r_disp  = linspace(0, 3*a, 3*Nr);
+            r_disp_curve    = r_disp(Nr+1:end);
+            % w_disp  = a^2*((2-r_disp.^2/a^2).*asin(a./r_disp) + sqrt(r_disp.^2-a^2)/a)/(d_vec(i)*pi*R);
+            % Preallocation
+            w_disp_p1   = zeros(size(r_disp));
+            w_disp_p2   = w_disp_p1;
+            w_disp_p3   = w_disp_p2;
+            % Assigning each part
+            w_disp_p1(Nr+1:end)   = atanh(a/R)*(a*asin(a./r_disp_curve) + sqrt(r_disp_curve.^2-a^2));
+            w_disp_p2(Nr+1:end)   = -R*asin(a./r_disp_curve);
+            w_disp_p3(Nr+1:end)   = sqrt(R^2-r_disp_curve.^2).*atan(a*sqrt(R^2-r_disp_curve.^2)./(R*sqrt(r_disp_curve.^2-a^2)));
+            % Assigning Total
+            w_disp  = (2/pi)*(w_disp_p1 + w_disp_p2 + w_disp_p3);
+            % Circular Part
+            w_disp(1:Nr)    = (sqrt(R^2 - r_mat(i,:).^2) + d_vec(i) - R);
+            w_disp  = w_disp/d_vec(i);
+            r_disp  = r_disp/a;
+
             % Figure
             figure(figNum-1);
-            % Extending r_plot and P_plot
-            r_plot  = [-flip(r_mat(i,2:end)), r_mat(i,:)];
-            P_plot  = [flip(P_mat(i,2:end)), P_mat(i,:)];
-            % Plotting
-            plot(r_plot, P_plot);
-            xlabel("Distance from center (in)");
-            ylabel("Pressure (ksi)");
-            xlim([minR*1.1, maxR*1.1]);
-            ylim([minP*1.1, maxP*1.1]);
-            title("Time = " + round(t(i),6) + " s");
-            pause(1/48);
+            if (moviePlt)
+                plot(r_disp, w_disp);
+                xlabel("r/a");
+                ylabel("w/d");
+                title("Time = " + round(t(i),6) + " s");
+                pause(1/48);
+            else
+                % Extending r_plot and P_plot
+                r_plot  = [-flip(r_mat(i,2:end)), r_mat(i,:)];
+                P_plot  = [flip(P_mat(i,2:end)), P_mat(i,:)];
+                % Plotting
+                plot(r_plot, P_plot);
+                xlabel("Distance from center (in)");
+                ylabel("Pressure (ksi)");
+                xlim([minR*1.1, maxR*1.1]);
+                ylim([minP*1.1, maxP*1.1]);
+                title("Time = " + round(t(i),6) + " s");
+                pause(1/48);
+            end
+            
         end
     end
     
@@ -162,6 +192,9 @@ function [d_vec, P_mat] = func_disp_press(v_init_mph, options)
         disp("Max displacement: " + max(d_vec) + " in.");
         disp("Max pressure: " + maxP + " ksi");
     end
+
+    % Find the exact max displacement
+    d_max_exact     = (15*m1*v_init.^2./(16*E_star*sqrt(R))/32.17/12).^0.4;
 
 end
 
