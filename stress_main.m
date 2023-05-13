@@ -15,7 +15,7 @@ else
     options     = zeros(1,4);
     % Initial Velocity
     v0_min  = 0.1;   % mph
-    v0_max  = 1000; % mph
+    v0_max  = 1000;  % mph
     N_v     = 400;  
     v0_vec  = linspace(v0_min, v0_max, N_v);
 

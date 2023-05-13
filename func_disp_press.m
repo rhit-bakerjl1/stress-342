@@ -95,8 +95,9 @@ function [d_vec, P_mat, d_max_exact] = func_disp_press(v_init_mph, options)
     delT    = (tf-t0)/(N_t-1);
     
     % Solution
-    [v, t] = func_rk4(@(v,t)func_dvdt(v,t,alpha(1)), [t0, tf], v_vec0, delT);
-    
+    % [v, t] = func_rk4(@(v,t)func_dvdt(v,t,alpha(1)), [t0, tf], v_vec0, delT);
+    [v, t] = func_rk4(@(v,t)func_dvdt_new(v,t,m1,E_star(1),R), [t0, tf], v_vec0, delT);
+
     % Analysis
     d_vec   = v(:,1);
     dddt_vec    = v(:,2);
@@ -160,7 +161,7 @@ function [d_vec, P_mat, d_max_exact] = func_disp_press(v_init_mph, options)
                 % Plotting
                 plot(r_plot, P_plot);
                 xlabel("Distance from center (in)");
-                ylabel("Pressure (ksi)");
+                ylabel("Pressure (psi)");
                 xlim([minR*1.1, maxR*1.1]);
                 ylim([minP*1.1, maxP*1.1]);
                 title("Time = " + round(t(i),6) + " s");
@@ -215,10 +216,46 @@ function [dvdt] = func_dvdt(v, t, alpha)
 
 end
 
+function [dvdt, tag] = func_dvdt_new(v, t, m, E_star, R)
+    % Conversions
+    lbf2base    = 32.17;    % ft*lbm/lbf/s^2
+    ft2in       = 12;       % in/ft
+    tag         = 0;
+
+    % Variables
+    d   = v(1);     % in
+    vel = v(2);     % in/s
+
+    % Nr
+    Nr  = 100;
+
+    % Finding force information
+    [F, P_profile, ~]   = func_force(d, E_star, R, Nr);     % lbf, psi
+    sigmaMax    = max(P_profile);  % psi
+    sigmaBreak  = 870.2;   % psi
+
+    % Differential
+    if (vel <= 0)
+        vel  = 0;
+        dvdt(2) = 0;
+    else
+        if (sigmaMax > sigmaBreak)
+            F   = R^2*(pi*sigmaBreak)^3/(6*E_star^2);   % lbf
+        end
+        dvdt(2) = -F/m*lbf2base*ft2in;     % in/s^2
+    end
+    dvdt(1) = vel;  % in/s
+
+end
+
 % For testing if E_star is important or not
 function [F_vec, P_vec, r_vec] = func_force_E_star(d, E_star, R, Nr)
+    % Conversions
+    lbf2base     = 32.17;    % ft*lbm/lbf/s^2
+    ft2in        = 12;       % in/ft
+
     % Find the force
-    F_vec   = 4/3*E_star*sqrt(R)*sqrt(d^3);
+    F_vec   = 4/3*E_star*sqrt(R)*sqrt(d^3)*lbf2base*ft2in;
     a       = sqrt(R*d);
 
     % Filling in r_mat
@@ -231,26 +268,25 @@ end
 
 % For timestepping oh boy yeah less go 
 function [F_vec, P_mat, r_mat] = func_force(d_vec, E_star, R, Nr)
-    % d_vec is a N_t by 1 vector
-    % F will be a N_t by 1 vector
-    % P_mat will be a N_t by Nr vector
-    % r_mat will be a N_t by Nr vector
+    % d_vec is a N_t by 1 vector: in
+    % F will be a N_t by 1 vector: lbf
+    % P_mat will be a N_t by Nr vector: psi
+    % r_mat will be a N_t by Nr vector: in
 
     % Find the force
     N_t     = length(d_vec);
     F_vec   = 4/3*E_star*sqrt(R)*sqrt(d_vec.^3);    % lbf
-    F_vec   = F_vec / 1000;             % kip
-    F_mat   = repmat(F_vec, 1, Nr);     % N_t by Nr
-    a_vec   = sqrt(R*d_vec);
-    a_mat   = repmat(a_vec, 1, Nr);     % N_t by Nr
+    F_mat   = repmat(F_vec, 1, Nr);     % N_t by Nr; lbf
+    a_vec   = sqrt(R*d_vec);            % in
+    a_mat   = repmat(a_vec, 1, Nr);     % N_t by Nr; in
 
     % Filling in r_mat
-    r_mat   = zeros(N_t, Nr);
+    r_mat   = zeros(N_t, Nr);       % in
     for i = 1:N_t
-        r_mat(i,:)  = linspace(0,a_vec(i),Nr);
+        r_mat(i,:)  = linspace(0,a_vec(i),Nr);  % in
     end
 
     % Use the force
-    p0_mat  = 3*F_mat./(2*pi*a_mat.^2);     % N_t by Nr
-    P_mat   = sqrt(1-r_mat.^2./a_mat.^2).*p0_mat;
+    p0_mat  = 3*F_mat./(2*pi*a_mat.^2);     % N_t by Nr; psi
+    P_mat   = sqrt(1-r_mat.^2./a_mat.^2).*p0_mat;   % psi
 end
