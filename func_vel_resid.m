@@ -1,5 +1,5 @@
 %% Solving Hertzian Contact Stress
-function [Resid] = func_vel_resid(v_init_mph, v_desired_mph)
+function [Resid] = func_vel_resid(v_init_mph, v_desired_mph, crk_len)
     
     % Does v_desired exist?
     if (~exist("v_desired_mph", "var"))
@@ -7,7 +7,7 @@ function [Resid] = func_vel_resid(v_init_mph, v_desired_mph)
     end
 
     % Plot?
-    plotting    = 1;
+    plotting    = 0;
 
     % Constants     (1 = baseball, 2 = ice)
     R   = 2.9;          % in
@@ -33,12 +33,16 @@ function [Resid] = func_vel_resid(v_init_mph, v_desired_mph)
     t0  = 0;        % s
     % tf  = 0.0004;   % s
     tf  = 0.001;   % s
-    N_t     = 3000;
+    N_t     = 3000*abs(log10(v_desired_mph))/abs(log10(1.5));
     delT    = (tf-t0)/(N_t-1);
     
     % Solution
-    [v, t, stopped] = func_rk4_modif(@(v)func_dvdt(v,m1,E_star(1),R), t0, v_vec0, delT);
-
+    if (exist('crk_len', 'var'))
+        [v, t, stopped] = func_rk4_modif(@(v)func_dvdt(v,m1,E_star(1),R, crk_len), t0, v_vec0, delT);
+    else
+        [v, t, stopped] = func_rk4_modif(@(v)func_dvdt(v,m1,E_star(1),R), t0, v_vec0, delT);
+    end
+    
     % Analysis
     d_vec   = v(:,1);
     dddt_vec    = v(:,2);
@@ -84,7 +88,7 @@ function [Resid] = func_vel_resid(v_init_mph, v_desired_mph)
 end
 
 %% Helpful Functions
-function [dvdt, tag] = func_dvdt(v, m, E_star, R)
+function [dvdt, tag] = func_dvdt(v, m, E_star, R, crk_len)
     % Conversions
     lbf2base    = 32.17;    % ft*lbm/lbf/s^2
     ft2in       = 12;       % in/ft
@@ -101,6 +105,11 @@ function [dvdt, tag] = func_dvdt(v, m, E_star, R)
     [F, P_profile, ~]   = func_force(d, E_star, R, Nr);     % lbf, psi
     sigmaMax    = max(P_profile);  % psi
     sigmaBreak  = 870.2;   % psi
+    if (exist("crk_len", 'var'))
+        Kic     = 182.149;  % psi*sqrt(in)
+        sigmaBreak2     = Kic/sqrt(pi*crk_len);
+        sigmaBreak  = min(sigmaBreak, sigmaBreak2);
+    end
 
     % Differential
     if (vel <= 0)
