@@ -17,7 +17,7 @@ function [Resid] = func_vel_air_resid(v_init_mph, v_desired_mph, air_length)
     plotting    = 0;
 
     % Constants     (1 = baseball, 2 = ice)
-    R   = 2.9;          % in
+    R   = 2.9/2;          % in
     m   = 0.3203;       % lbm, [0.3125, 0.3281]
     rho = 4.425593e-5;  % lbm/in^3
     Cd  = 0.3;          % unitless

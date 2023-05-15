@@ -10,7 +10,7 @@ function [Resid] = func_vel_resid(v_init_mph, v_desired_mph, crk_len)
     plotting    = 0;
 
     % Constants     (1 = baseball, 2 = ice)
-    R   = 2.9;          % in
+    R   = 2.9/2;          % in
     E1  = 10*10^3;      % psi
     E2  = 1320*10^3;    % psi
     nu2 = 0.33;         % unitless
@@ -32,7 +32,7 @@ function [Resid] = func_vel_resid(v_init_mph, v_desired_mph, crk_len)
     % Time
     t0  = 0;        % s
     % tf  = 0.0004;   % s
-    tf  = 0.001;   % s
+    tf  = 0.00025;   % s
     N_t     = 3000*abs(log10(v_desired_mph))/abs(log10(1.5));
     delT    = (tf-t0)/(N_t-1);
     

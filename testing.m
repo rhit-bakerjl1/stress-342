@@ -4,7 +4,7 @@ clc;
 
 % Options
 air     = 0;
-crack   = 0.5;
+crack   = 0;
 
 % Constants
 vf  = 1;

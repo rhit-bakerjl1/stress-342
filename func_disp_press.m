@@ -9,7 +9,7 @@ function [d_vec, P_mat, d_max_exact] = func_disp_press(v_init_mph, options)
     moviePlt    = 0;        % 0 for pressure, 1 for displacement
     
     % Constants     (1 = baseball, 2 = ice)
-    R   = 2.9;          % in
+    R   = 2.9/2;          % in
     E1  = 10*10^3;      % psi
     E2  = 1320*10^3;    % psi
     nu2 = 0.33;         % unitless
