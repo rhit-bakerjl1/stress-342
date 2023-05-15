@@ -1,9 +1,13 @@
 %% Solving Hertzian Contact Stress
-function [Resid] = func_vel_air_resid(v_init_mph, v_desired_mph)
+function [Resid] = func_vel_air_resid(v_init_mph, v_desired_mph, air_length)
     
     % Does v_desired exist?
     if (~exist("v_desired_mph", "var"))
         v_desired_mph   = 0;
+    end
+
+    if (~exist("air_length", 'var'))
+        air_length  = 2*12;     % in
     end
 
     v_init  = v_init_mph*17.6; % in/s
@@ -30,7 +34,7 @@ function [Resid] = func_vel_air_resid(v_init_mph, v_desired_mph)
     delT    = (tf-t0)/(N_t-1);
     
     % Solution
-    [v, t, stopped] = func_rk4_modif_air(@(v)func_dvdt(v,m,rho,R,Cd), t0, v_vec0, delT);
+    [v, t, stopped] = func_rk4_modif_air(@(v)func_dvdt(v,m,rho,R,Cd), t0, v_vec0, delT, air_length);
         
     % Analysis
     dddt_vec    = v(:,2);

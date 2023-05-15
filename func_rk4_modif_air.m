@@ -5,7 +5,7 @@
 % tspan: [t0, tf]
 % y0: y @ t=t0. Row Vector
 % delT: desired timestep
-function [y, t, stopped] = func_rk4_modif_air(odefun, t0, y0, delT)
+function [y, t, stopped] = func_rk4_modif_air(odefun, t0, y0, delT, thick)
     % Time stuff
     N_alloc     = 100000;
     t   = (t0:delT:delT*N_alloc)';
@@ -15,7 +15,9 @@ function [y, t, stopped] = func_rk4_modif_air(odefun, t0, y0, delT)
     % Initialize y
     y   = zeros(length(t), length(y0));
     y(1,:)  = y0;
-    thick   = 24;
+    if(~exist('thick', 'var'))
+        thick   = 24;
+    end
 
     % Loop through to find y
     i   = 1;
