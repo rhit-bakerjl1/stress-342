@@ -17,7 +17,7 @@ function [y, t, stopped] = func_rk4_modif(odefun, t0, y0, delT)
     y(1,:)  = y0;
     d_break = 0;
     % thick   = 4;
-    thick   = 2;
+    thick   = 4;
 
     % Loop through to find y
     i   = 1;

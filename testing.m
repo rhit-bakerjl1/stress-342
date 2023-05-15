@@ -3,13 +3,13 @@ clear;
 clc;
 
 % Options
-air     = 0;
+air     = 1;
 crack   = 0;
 
 % Constants
 vf  = 1;
 v_guess  = 60;
-numBlocks   = 100;
+numBlocks   = 7;
 vel_block   = ones(1,numBlocks+1)*5;
 if (air)
     vel_air     = ones(1,numBlocks+1)*5;
